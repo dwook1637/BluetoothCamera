@@ -190,7 +190,7 @@ public class BluetoothService{
                     break;
                 }
                 if (socket != null) {
-                    Log.d(TAG, "연결함" + socket.getRemoteDevice().getName() + "     상태 : " + mState);
+                    Log.d(TAG, "연결함 " + socket.getRemoteDevice().getName() + "     상태 : " + mState);
                     //manageConnectedSocket(socket);
                     synchronized (BluetoothService.this){
                         switch (mState){
@@ -217,7 +217,6 @@ public class BluetoothService{
             } catch (IOException e) { Log.d(TAG, "failed to close socket"); }
         }
     }//***************************연결 수락 스레드 끝***************************
-
 
     //***************************연결 스레드***************************
     private class ConnectThread extends Thread {

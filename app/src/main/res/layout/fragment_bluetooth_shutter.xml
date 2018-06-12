@@ -30,21 +30,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="You are controlling the client android device."
+        android:text="현재 원격 제어 중"
         android:id="@+id/controllerText"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:visibility="gone"
-        android:gravity="center_horizontal"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Click on the below button to take a photo on the controlled device."
-        android:visibility="gone"
-        android:layout_below="@+id/controllerText"
-        android:id="@+id/buttonInfo"
         android:gravity="center_horizontal"/>
 
 </RelativeLayout>

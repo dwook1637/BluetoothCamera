@@ -69,7 +69,7 @@ public class BluetoothListAdapter extends ArrayAdapter {
         holder.btnPair.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("kdw_paring", device.getName() + "  " + device.getAddress());
+                Log.d("kdw_paring", "페어링 버튼 누름 : " + device.getName() + "  " + device.getAddress());
 
                 Intent intent = new Intent(context, ShutterActivity.class);
                 intent.putExtra("SHUTTER_DEVICE", device);

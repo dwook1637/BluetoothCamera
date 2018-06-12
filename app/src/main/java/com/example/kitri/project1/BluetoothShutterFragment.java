@@ -71,7 +71,7 @@ import java.util.concurrent.Semaphore;
 public class BluetoothShutterFragment extends Fragment {
     //member fields
     public static BluetoothShutterFragment bluetoothShutterFragment;
-    private static final String TAG = "kdw_BlueShutterFragment";
+    private static final String TAG = "kdw_BlueShuFragment";
     private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
     private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
     private static final int REQUEST_ENABLE_BT = 3;
@@ -81,7 +81,7 @@ public class BluetoothShutterFragment extends Fragment {
     private StringBuffer mOutStringBuffer;
     private BluetoothAdapter mBluetoothAdapter = null;
     private BluetoothService mBluetoothService = null;
-    private TextView controllerText,buttonInfo;
+    private TextView controllerText;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
@@ -204,7 +204,6 @@ public class BluetoothShutterFragment extends Fragment {
         imgPreview = (ImageView) view.findViewById(R.id.img_preview);
         mSendButton = (ImageView) view.findViewById(R.id.button_send);
         controllerText = (TextView) view.findViewById(R.id.controllerText);
-        buttonInfo=(TextView)view.findViewById(R.id.buttonInfo);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.control);
     }
 
@@ -296,10 +295,9 @@ public class BluetoothShutterFragment extends Fragment {
                         case BluetoothService.STATE_CONNECTED:
                             if (!BluetoothService.CONNECTED_AS_SERVER) {
                                 mTextureView.setVisibility(View.GONE);
-                                controllerText.setText("This device is controlling the other android device:"
+                                controllerText.setText("연결된 디바이스 : "
                                         + mConnectedDeviceName);
                                 controllerText.setVisibility(View.VISIBLE);
-                                buttonInfo.setVisibility(View.VISIBLE);
                                 setStatus("Controlling :" + mConnectedDeviceName);
                             } else {
                                 mSendButton.setVisibility(View.GONE);
@@ -314,7 +312,6 @@ public class BluetoothShutterFragment extends Fragment {
                         case BluetoothService.STATE_NONE:
                             setStatus(R.string.title_not_connected);
                             controllerText.setVisibility(View.GONE);
-                            buttonInfo.setVisibility(View.GONE);
                             break;
                     }
                     break;

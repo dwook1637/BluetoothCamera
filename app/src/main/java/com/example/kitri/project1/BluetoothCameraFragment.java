@@ -81,7 +81,7 @@ public class BluetoothCameraFragment extends Fragment {
     private StringBuffer mOutStringBuffer;
     private BluetoothAdapter mBluetoothAdapter = null;
     private BluetoothService mBluetoothService = null;
-    private TextView controllerText,buttonInfo;
+    private TextView controllerText;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
@@ -184,7 +184,6 @@ public class BluetoothCameraFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "onViewCreated");
         controllerText = (TextView) view.findViewById(R.id.controllerText);
-        buttonInfo=(TextView)view.findViewById(R.id.buttonInfo);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.control);
     }
 
@@ -280,10 +279,9 @@ public class BluetoothCameraFragment extends Fragment {
                         case BluetoothService.STATE_CONNECTED:
                             if (!BluetoothService.CONNECTED_AS_SERVER) {
                                 mTextureView.setVisibility(View.GONE);
-                                controllerText.setText("This device is controlling the other android device:"
+                                controllerText.setText("연결된 디바이스 : "
                                         + mConnectedDeviceName);
                                 controllerText.setVisibility(View.VISIBLE);
-                                buttonInfo.setVisibility(View.VISIBLE);
                                 setStatus("Controlling :" + mConnectedDeviceName);
                             } else {
                                 setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
@@ -296,7 +294,6 @@ public class BluetoothCameraFragment extends Fragment {
                         case BluetoothService.STATE_NONE:
                             setStatus(R.string.title_not_connected);
                             controllerText.setVisibility(View.GONE);
-                            buttonInfo.setVisibility(View.GONE);
                             break;
                     }
                     break;
@@ -345,6 +342,15 @@ public class BluetoothCameraFragment extends Fragment {
         BluetoothService.CONNECTED_AS_SERVER = false;
     }
 
+    private void connectDevice() {
+        Log.d(TAG,"connectDevice");
+        //String address = data.getExtras().getString(ShutterActivity.EXTRA_DEVICE_ADDRESS);
+        //BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        BluetoothDevice device = CameraActivity.EXTRA_DEVICE;
+        mBluetoothService.connect(device);
+        mConnectedDeviceName = device.getName();
+    }
+
     //토스트 스레드
     private void showToast(final String text) {
         final Activity activity = getActivity();
@@ -367,18 +373,21 @@ public class BluetoothCameraFragment extends Fragment {
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
+            Log.d(TAG, "mStateCallback ㅅㅂ onOpened");
             mCameraOpenCloseLock.release();
             mCameraDevice = cameraDevice;
             createCameraPreviewSession();
         }
         @Override
         public void onDisconnected(@NonNull CameraDevice cameraDevice) {
+            Log.d(TAG, "mStateCallback ㅅㅂ onDisconnected");
             mCameraOpenCloseLock.release();
             cameraDevice.close();
             mCameraDevice = null;
         }
         @Override
         public void onError(@NonNull CameraDevice cameraDevice, int error) {
+            Log.d(TAG, "mStateCallback ㅅㅂ onError");
             mCameraOpenCloseLock.release();
             cameraDevice.close();
             mCameraDevice = null;
@@ -408,10 +417,55 @@ public class BluetoothCameraFragment extends Fragment {
 
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
-        public void onImageAvailable(ImageReader reader) {
+        public void onImageAvailable(final ImageReader reader) {
             mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
+            Log.d(TAG, "mOnImageAvailableListener ZZZ onImageAvailable");
         }
     };
+
+
+//    private static class ImageSaver implements Runnable {
+//        private final Image mImage;
+//        private final File mFile;
+//
+//        public ImageSaver(Image image, File file) {
+//            Log.d(TAG,"ImageSaver constructor");
+//            mImage = image;
+//            mFile = file;
+//        }
+//
+//        @Override
+//        public void run() {
+//            Log.d(TAG,"ImageSaver:run");
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                mImage.setTimestamp(System.currentTimeMillis());
+//            }
+//            ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
+//            byte[] bytes = new byte[buffer.remaining()];
+//            buffer.get(bytes);
+//            FileOutputStream output = null;
+//            try {
+//                output = new FileOutputStream(mFile);
+//                output.write(bytes);
+//            } catch (IOException e) {
+//            } finally {
+//                mImage.close();
+//                if (null != output) {
+//                    try {
+//                        output.close();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//            Bitmap b = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+//            System.gc();
+//            long time = System.currentTimeMillis() / 100000000;
+//            MediaStore.Images.Media.insertImage(
+//                    bluetoothCameraFragment.getActivity().getContentResolver(),
+//                    b, "remote_Cam_" + time, "");
+//        }
+//    }
 
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         private void process(CaptureResult result) {
@@ -660,7 +714,7 @@ public class BluetoothCameraFragment extends Fragment {
             assert texture != null;
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             Surface surface = new Surface(texture);
-            mPreviewRequestBuilder
+            mPreviewRequestBuilder                                                                      //오류
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
             mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
@@ -759,7 +813,7 @@ public class BluetoothCameraFragment extends Fragment {
             final Activity activity = getActivity();
             if (null == activity || null == mCameraDevice) {
                 return;
-            }
+            }                                                                               /////오류
             final CaptureRequest.Builder captureBuilder =
                     mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(mImageReader.getSurface());
@@ -868,4 +922,5 @@ public class BluetoothCameraFragment extends Fragment {
         }
     }
     ////////////////////////////////////////////카메라//////////////////////////////////////////
+
 }

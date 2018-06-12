@@ -1,5 +1,6 @@
 package com.example.kitri.project1;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -8,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 public class CameraActivity extends FragmentActivity {
+    public static BluetoothDevice EXTRA_DEVICE = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
