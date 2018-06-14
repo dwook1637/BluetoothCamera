@@ -29,6 +29,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -57,6 +58,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -136,6 +138,7 @@ public class BluetoothCameraFragment extends Fragment {
             Toast.makeText(activity, "블루투스를 지원하지 않습니다", Toast.LENGTH_LONG).show();
             activity.finish();
         }
+
     }
 
     @Override
@@ -150,8 +153,8 @@ public class BluetoothCameraFragment extends Fragment {
     @Override
     public void onPause() {
         Log.d(TAG, "onPause");
-        //closeCamera();
-        //stopBackgroundThread();
+        closeCamera();
+        stopBackgroundThread();
         super.onPause();
     }
 
@@ -164,7 +167,7 @@ public class BluetoothCameraFragment extends Fragment {
                 mBluetoothService.start();
             }
         }
-        //startBackgroundThread();
+        startBackgroundThread();
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
@@ -185,6 +188,7 @@ public class BluetoothCameraFragment extends Fragment {
         Log.d(TAG, "onViewCreated");
         controllerText = (TextView) view.findViewById(R.id.controllerText);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.control);
+
     }
 
     @Override
@@ -192,10 +196,21 @@ public class BluetoothCameraFragment extends Fragment {
         Log.d(TAG, "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
         //String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BlueCam/";
-        String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/BlueCam/";
+        //String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/BlueCam/";
         //mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
-        mFile = new File(path, "pic.jpg");
-        if(!mFile.exists()) mFile.mkdir();
+        //mFile = new File(path, "pic.jpg");
+        //if(!mFile.exists()) mFile.mkdir();
+
+        File dir = new File (Environment.getExternalStorageDirectory() + "/DCIM/BlueCam");
+        dir.mkdirs();
+
+        int time = (int)(System.currentTimeMillis() / 100000000);
+
+        String fileName = String.format("remote_Cam_%d.jpg", time);
+
+        Log.d(TAG, "이제 파일 생성자 호출");
+        mFile = new File(dir, fileName);
+
     }
 
     @Override
@@ -373,21 +388,18 @@ public class BluetoothCameraFragment extends Fragment {
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
-            Log.d(TAG, "mStateCallback ㅅㅂ onOpened");
             mCameraOpenCloseLock.release();
             mCameraDevice = cameraDevice;
             createCameraPreviewSession();
         }
         @Override
         public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-            Log.d(TAG, "mStateCallback ㅅㅂ onDisconnected");
             mCameraOpenCloseLock.release();
             cameraDevice.close();
             mCameraDevice = null;
         }
         @Override
         public void onError(@NonNull CameraDevice cameraDevice, int error) {
-            Log.d(TAG, "mStateCallback ㅅㅂ onError");
             mCameraOpenCloseLock.release();
             cameraDevice.close();
             mCameraDevice = null;
@@ -419,53 +431,10 @@ public class BluetoothCameraFragment extends Fragment {
         @Override
         public void onImageAvailable(final ImageReader reader) {
             mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
-            Log.d(TAG, "mOnImageAvailableListener ZZZ onImageAvailable");
         }
     };
 
 
-//    private static class ImageSaver implements Runnable {
-//        private final Image mImage;
-//        private final File mFile;
-//
-//        public ImageSaver(Image image, File file) {
-//            Log.d(TAG,"ImageSaver constructor");
-//            mImage = image;
-//            mFile = file;
-//        }
-//
-//        @Override
-//        public void run() {
-//            Log.d(TAG,"ImageSaver:run");
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                mImage.setTimestamp(System.currentTimeMillis());
-//            }
-//            ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
-//            byte[] bytes = new byte[buffer.remaining()];
-//            buffer.get(bytes);
-//            FileOutputStream output = null;
-//            try {
-//                output = new FileOutputStream(mFile);
-//                output.write(bytes);
-//            } catch (IOException e) {
-//            } finally {
-//                mImage.close();
-//                if (null != output) {
-//                    try {
-//                        output.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//            Bitmap b = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-//            System.gc();
-//            long time = System.currentTimeMillis() / 100000000;
-//            MediaStore.Images.Media.insertImage(
-//                    bluetoothCameraFragment.getActivity().getContentResolver(),
-//                    b, "remote_Cam_" + time, "");
-//        }
-//    }
 
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         private void process(CaptureResult result) {
@@ -898,11 +867,22 @@ public class BluetoothCameraFragment extends Fragment {
             ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
+
             FileOutputStream output = null;
             try {
-                output = new FileOutputStream(mFile);
-                output.write(bytes);
+                File sdCard = Environment.getExternalStorageDirectory();
+                File dir = new File (sdCard.getAbsolutePath() + "/DCIM/BlueCam");
+                dir.mkdirs();
+
+                String fileName = "remote_Cam" + (int)(System.currentTimeMillis());
+                File outFile = new File(dir, fileName);
+
+                output = new FileOutputStream(outFile);
+                output.write(bytes[0]);
+                output.flush();
+                Log.d(TAG, "onPictureTaken - wrote bytes: " + bytes.length + " to " + mFile.getAbsolutePath());
             } catch (IOException e) {
+                Log.d(TAG, "onPictureTaken -> catch Exception!!!");
             } finally {
                 mImage.close();
                 if (null != output) {
@@ -914,13 +894,18 @@ public class BluetoothCameraFragment extends Fragment {
                 }
             }
             Bitmap b = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            b.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+
             System.gc();
             long time = System.currentTimeMillis() / 100000000;
             MediaStore.Images.Media.insertImage(
                     bluetoothCameraFragment.getActivity().getContentResolver(),
                     b, "remote_Cam_" + time, "");
+            Log.d(TAG, "파일저장 : "+"remote_Cam_"+time);
         }
     }
     ////////////////////////////////////////////카메라//////////////////////////////////////////
+
 
 }
